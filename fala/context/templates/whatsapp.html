@@ -1,0 +1,69 @@
+<!--
+  Fala WhatsApp Template
+  ─────────────────────────────────────────────────────
+  Dual structure: rendered HTML page + hidden textarea with WhatsApp markdown.
+  Copy button grabs plain text from textarea (WhatsApp strips rich text).
+
+  PLACEHOLDERS (replace when generating):
+    {{TITLE}}              — Main heading
+    {{SUBTITLE}}           — Optional italic subtitle below heading
+    {{RENDERED_CONTENT}}   — HTML content: <h2>, <p>, <ul><li>, <b>, etc.
+    {{WHATSAPP_CONTENT}}   — Same content in WhatsApp markdown:
+                              *bold*, _italic_, • bullets, plain newlines
+    {{BUTTON_LABEL}}       — "Copiar para WhatsApp" or equivalent
+    {{BUTTON_COPIED}}      — "Copiado" or equivalent
+-->
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{TITLE}}</title>
+<style>
+  :root { --bg:#faf8f3; --fg:#23211c; --muted:#6b665b; --card:#fff; --line:#e6e1d6; --accent:#2f6b4f; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#1b1a17; --fg:#ece8df; --muted:#a39d90; --card:#24221e; --line:#38352f; --accent:#7fc3a0; } }
+  body { margin:0; background:var(--bg); color:var(--fg); font:16px/1.55 -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width:680px; margin:0 auto; padding:32px 16px 64px; }
+  .page { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:28px 28px 20px; }
+  h1 { margin:0; font-size:26px; }
+  .sub { margin:2px 0 22px; color:var(--muted); font-style:italic; }
+  h2 { margin:20px 0 6px; font-size:16px; color:var(--accent); }
+  h3 { margin:16px 0 4px; font-size:15px; }
+  p { margin:0 0 8px; }
+  ul { margin:0 0 8px; padding-left:20px; }
+  li { margin:2px 0; }
+  .bar { display:flex; gap:10px; margin-top:18px; align-items:center; }
+  button { font:inherit; padding:9px 16px; border-radius:8px; border:1px solid var(--accent); background:var(--accent); color:var(--card); cursor:pointer; }
+  #ok { color:var(--muted); font-size:14px; }
+  textarea { position:absolute; left:-9999px; }
+</style>
+</head>
+<body>
+<main>
+<div class="page">
+  <h1>{{TITLE}}</h1>
+  <div class="sub">{{SUBTITLE}}</div>
+
+  <!-- RENDERED CONTENT: replace this block with real HTML content -->
+  {{RENDERED_CONTENT}}
+  <!-- END RENDERED CONTENT -->
+
+  <div class="bar"><button onclick="copyWhats()">{{BUTTON_LABEL}}</button><span id="ok"></span></div>
+</div>
+</main>
+
+<!-- WHATSAPP CONTENT: replace this block with WhatsApp-formatted plain text -->
+<textarea id="wa">{{WHATSAPP_CONTENT}}</textarea>
+<!-- END WHATSAPP CONTENT -->
+
+<script>
+function copyWhats() {
+  var t = document.getElementById('wa');
+  var done = function() { document.getElementById('ok').textContent = '{{BUTTON_COPIED}}'; };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(t.value).then(done, function() { t.select(); document.execCommand('copy'); done(); });
+  } else { t.select(); document.execCommand('copy'); done(); }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!--
+  Fala Slack Template
+  ─────────────────────────────────────────────────────
+  Single zone: rendered HTML IS the copy source.
+  Copy button uses getSelection + execCommand to preserve rich text.
+  Slack receives bold, bullets, and line breaks from clipboard.
+
+  PLACEHOLDERS (replace when generating):
+    {{TITLE}}            — Page title (for browser tab)
+    {{COPY_CONTENT}}     — Flat HTML content inside the copy zone:
+                            <b>bold</b>, <br><br> between sections,
+                            <ul><li> for bullets. NO <p> tags.
+    {{BUTTON_LABEL}}     — "Copy for Slack" or "Copiar para Slack"
+    {{BUTTON_COPIED}}    — "Copied!" or "Copiado!"
+
+  RULES:
+    - NO <p> tags inside copy-zone (Slack collapses margins)
+    - NO markdown (*bold*, - bullet) inside copy-zone (pasted literally)
+    - NO nested <div> inside copy-zone (use flat HTML)
+    - Use <br><br> between sections
+    - Use <b> for bold
+    - Use <ul><li> for bullets
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{TITLE}}</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --border: #2a2a4a;
+    --text: #e0e0e0;
+    --text-muted: #8888aa;
+    --accent: #6c63ff;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f5f5f7;
+      --surface: #ffffff;
+      --border: #e0e0e5;
+      --text: #1a1a2e;
+      --text-muted: #6b6b80;
+      --accent: #4f46e5;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f5f5f7;
+    --surface: #ffffff;
+    --border: #e0e0e5;
+    --text: #1a1a2e;
+    --text-muted: #6b6b80;
+    --accent: #4f46e5;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 32px 16px;
+    line-height: 1.6;
+  }
+  .container { max-width: 680px; margin: 0 auto; }
+  .copy-zone {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    font-size: 15px;
+    line-height: 1.6;
+    cursor: text;
+  }
+  .copy-zone b { color: inherit; font-weight: 700; }
+  button {
+    display: block;
+    margin: 16px auto;
+    padding: 10px 24px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:hover { opacity: 0.9; }
+  .copied { background: #22c55e; }
+  .hint {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="copy-zone" id="copy-zone">
+    <!-- COPY CONTENT: flat HTML, no <p> tags, <br><br> between sections -->
+    {{COPY_CONTENT}}
+    <!-- END COPY CONTENT -->
+  </div>
+
+  <button id="copy-btn" onclick="copyRich()">{{BUTTON_LABEL}}</button>
+  <p class="hint">Copies rich text. Paste directly in Slack with Cmd+V.</p>
+</div>
+
+<script>
+function copyRich() {
+  var zone = document.getElementById('copy-zone');
+  var selection = window.getSelection();
+  var range = document.createRange();
+  range.selectNodeContents(zone);
+  selection.removeAllRanges();
+  selection.addRange(range);
+  document.execCommand('copy');
+  selection.removeAllRanges();
+
+  var btn = document.getElementById('copy-btn');
+  btn.textContent = '{{BUTTON_COPIED}}';
+  btn.classList.add('copied');
+  setTimeout(function() {
+    btn.textContent = '{{BUTTON_LABEL}}';
+    btn.classList.remove('copied');
+  }, 2000);
+}
+</script>
+</body>
+</html>

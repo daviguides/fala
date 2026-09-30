@@ -1,0 +1,308 @@
+#!/bin/bash
+set -euo pipefail
+
+# ============================================================================
+# Fala Installer
+# Installs Fala communication drafting to ~/.claude/fala
+# ============================================================================
+
+# --- Colors (Rich-inspired palette) ---
+readonly CYAN='\033[0;36m'
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[0;33m'
+readonly RED='\033[0;31m'
+readonly DIM='\033[2m'
+readonly BOLD='\033[1m'
+readonly NC='\033[0m'
+
+# --- Configuration ---
+readonly REPO_URL="https://github.com/daviguides/fala.git"
+readonly TMP_DIR="/tmp/fala-$$"
+readonly CLAUDE_DIR="$HOME/.claude"
+readonly TARGET_DIR="$CLAUDE_DIR/fala"
+readonly SOURCE_SUBDIR="fala"
+
+# --- Marketplace Configuration ---
+readonly MARKETPLACE_URL="https://github.com/daviguides/claude-marketplace.git"
+readonly PLUGIN_IDENTIFIER="fala@daviguides"
+
+# --- Box width (53 chars between borders) ---
+readonly W=53
+
+# --- UI Helpers ---
+box_top() {
+  printf "${CYAN}╭"
+  printf '─%.0s' $(seq 1 $W)
+  printf "╮${NC}\n"
+}
+
+box_bottom() {
+  printf "${CYAN}╰"
+  printf '─%.0s' $(seq 1 $W)
+  printf "╯${NC}\n"
+}
+
+box_empty() {
+  printf "${CYAN}│${NC}%${W}s${CYAN}│${NC}\n" ""
+}
+
+box_separator() {
+  printf "${CYAN}│${DIM}"
+  printf '─%.0s' $(seq 1 $W)
+  printf "${NC}${CYAN}│${NC}\n"
+}
+
+box_text() {
+  local text="$1"
+  local len=${#text}
+  local pad=$((W - 2 - len))
+  printf "${CYAN}│${NC}  %s%${pad}s${CYAN}│${NC}\n" "$text" ""
+}
+
+status_line() {
+  local icon="$1"
+  local color="$2"
+  local text="$3"
+  local len=${#text}
+  local pad=$((W - 4 - len))
+  printf "${CYAN}│${NC}  ${color}%s${NC} %s%${pad}s${CYAN}│${NC}\n" "$icon" "$text" ""
+}
+
+status_ok() { status_line "✓" "$GREEN" "$1"; }
+status_warn() { status_line "⚠" "$YELLOW" "$1"; }
+status_error() { status_line "✗" "$RED" "$1"; }
+status_info() { status_line "→" "$DIM" "$1"; }
+
+spinner() {
+  local pid=$1
+  local msg="$2"
+  local len=${#msg}
+  local pad=$((W - 4 - len))
+  local spin='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+  local i=0
+  while kill -0 "$pid" 2>/dev/null; do
+    printf "\r${CYAN}│${NC}  ${CYAN}%s${NC} %s%${pad}s${CYAN}│${NC}" "${spin:i++%10:1}" "$msg" ""
+    sleep 0.1
+  done
+  printf "\r%*s\r" 60 ""
+}
+
+# --- Cleanup ---
+cleanup() {
+  if [ -d "$TMP_DIR" ]; then
+    status_info "Cleaning up..."
+    rm -rf "$TMP_DIR"
+  fi
+  box_bottom
+  printf "\n"
+}
+trap cleanup EXIT
+
+# ============================================================================
+# Helper Functions
+# ============================================================================
+
+print_header() {
+  printf "\n"
+  box_top
+  box_empty
+  printf "${CYAN}│${NC}   ${BOLD}F  A  L  A${NC}     Multi-Channel Communication    ${CYAN}│${NC}\n"
+  printf "${CYAN}│${NC}                   for Claude Code (v0.1.0)        ${CYAN}│${NC}\n"
+  box_empty
+  box_separator
+}
+
+check_dependencies() {
+  if ! command -v git >/dev/null 2>&1; then
+    status_error "git is not installed"
+    printf "       Install: https://git-scm.com/downloads\n"
+    exit 1
+  fi
+}
+
+clone_repository() {
+  git clone --quiet "$REPO_URL" "$TMP_DIR" 2>/dev/null &
+  local pid=$!
+  spinner $pid "Cloning repository..."
+  wait $pid || {
+    status_error "Failed to clone repository"
+    exit 1
+  }
+  status_ok "Repository cloned"
+}
+
+validate_source_structure() {
+  local src_subdir="$TMP_DIR/$SOURCE_SUBDIR"
+
+  if [ ! -d "$src_subdir" ]; then
+    status_error "Expected subfolder not found: $src_subdir"
+    exit 1
+  fi
+}
+
+copy_files() {
+  local src_subdir="$TMP_DIR/$SOURCE_SUBDIR"
+
+  mkdir -p "$TARGET_DIR"
+
+  if command -v rsync >/dev/null 2>&1; then
+    rsync -a "$src_subdir"/ "$TARGET_DIR"/
+  else
+    ( set -f; cp -R "$src_subdir"/. "$TARGET_DIR"/ )
+  fi
+}
+
+install() {
+  [ -d "$CLAUDE_DIR" ] || mkdir -p "$CLAUDE_DIR"
+  [ -d "$TARGET_DIR" ] && rm -rf "$TARGET_DIR"
+
+  copy_files &
+  local pid=$!
+  spinner $pid "Installing to ~/.claude/fala..."
+  wait $pid
+
+  status_ok "Fala installed to ~/.claude/fala"
+}
+
+check_claude_cli() {
+  if ! command -v claude >/dev/null 2>&1; then
+    status_warn "Claude CLI not found, skipping marketplace"
+    return 1
+  fi
+  return 0
+}
+
+nuke_stale_cache() {
+  local cache_dir="$CLAUDE_DIR/plugins/cache/daviguides/fala"
+  if [ -d "$cache_dir" ]; then
+    rm -rf "$cache_dir"
+    status_ok "Stale plugin cache purged"
+  fi
+}
+
+fix_installed_plugins_registry() {
+  local registry="$CLAUDE_DIR/plugins/installed_plugins.json"
+  [ -f "$registry" ] || return 0
+
+  local current_version
+  current_version=$(python3 -c "
+import json
+with open('$TMP_DIR/.claude-plugin/plugin.json') as f:
+    print(json.load(f)['version'])
+" 2>/dev/null) || return 0
+
+  python3 -c "
+import json, datetime
+
+registry_path = '$registry'
+version = '$current_version'
+cache_path = '$CLAUDE_DIR/plugins/cache/daviguides/fala/' + version
+
+with open(registry_path) as f:
+    data = json.load(f)
+
+plugins = data.get('plugins', {})
+key = 'fala@daviguides'
+now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.000Z')
+
+if key in plugins and len(plugins[key]) > 0:
+    entry = plugins[key][0]
+    if entry.get('version') != version or entry.get('installPath') != cache_path:
+        entry['version'] = version
+        entry['installPath'] = cache_path
+        entry['lastUpdated'] = now
+        with open(registry_path, 'w') as f:
+            json.dump(data, f, indent=2)
+        print('UPDATED')
+    else:
+        print('ALREADY_CURRENT')
+else:
+    print('NOT_FOUND')
+" 2>/dev/null
+}
+
+setup_marketplace() {
+  if ! check_claude_cli; then
+    return 0
+  fi
+
+  nuke_stale_cache
+
+  # Add marketplace
+  claude plugin marketplace add "$MARKETPLACE_URL" >/dev/null 2>&1 &
+  local pid=$!
+  spinner $pid "Setting up marketplace..."
+  wait $pid && status_ok "Marketplace configured" || status_info "Marketplace already configured"
+
+  # Update marketplace cache
+  claude plugin marketplace update daviguides >/dev/null 2>&1 &
+  pid=$!
+  spinner $pid "Updating marketplace cache..."
+  wait $pid && status_ok "Marketplace cache updated" || status_info "Cache update skipped"
+
+  # Install plugin
+  claude plugin install "$PLUGIN_IDENTIFIER" >/dev/null 2>&1 &
+  pid=$!
+  spinner $pid "Installing plugin..."
+  wait $pid && status_ok "Plugin installed: $PLUGIN_IDENTIFIER" || status_warn "Plugin install failed"
+
+  local result
+  result=$(fix_installed_plugins_registry)
+  if [ "$result" = "UPDATED" ]; then
+    status_ok "Registry updated to current version"
+    local current_version
+    current_version=$(python3 -c "import json; print(json.load(open('$TMP_DIR/.claude-plugin/plugin.json'))['version'])" 2>/dev/null)
+    if [ -n "$current_version" ]; then
+      local versioned_cache="$CLAUDE_DIR/plugins/cache/daviguides/fala/$current_version"
+      rm -rf "$CLAUDE_DIR/plugins/cache/daviguides/fala"
+      mkdir -p "$versioned_cache"
+      if command -v rsync >/dev/null 2>&1; then
+        rsync -a "$TMP_DIR"/ "$versioned_cache"/ --exclude .git
+      else
+        cp -R "$TMP_DIR"/* "$versioned_cache"/
+        cp -R "$TMP_DIR"/.claude-plugin "$versioned_cache"/
+      fi
+      status_ok "Cache rebuilt at $current_version"
+    fi
+  elif [ "$result" = "ALREADY_CURRENT" ]; then
+    status_info "Registry already current"
+  fi
+}
+
+box_title() {
+  printf "${CYAN}│${NC}  ${GREEN}${BOLD}Installation Complete${NC}                              ${CYAN}│${NC}\n"
+}
+
+box_heading() {
+  printf "${CYAN}│${NC}  ${BOLD}Next Steps${NC}                                         ${CYAN}│${NC}\n"
+}
+
+print_next_steps() {
+  box_empty
+  box_separator
+  box_title "Installation Complete"
+  box_separator
+  box_empty
+  box_heading "Next Steps"
+  box_text "1. Use /fala:load to load communication"
+  box_text "2. Channels: WhatsApp, Slack, email"
+  box_text "3. Complete HTML templates with copy"
+  box_empty
+}
+
+# ============================================================================
+# Main
+# ============================================================================
+
+main() {
+  print_header
+  check_dependencies
+  clone_repository
+  validate_source_structure
+  install
+  setup_marketplace
+  print_next_steps
+}
+
+# Entry point
+main

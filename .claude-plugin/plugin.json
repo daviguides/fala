@@ -1,0 +1,10 @@
+{
+  "name": "fala",
+  "version": "0.1.0",
+  "description": "Multi-channel communication drafting — WhatsApp, Slack, email. Complete templates, channel detection, zero AI tells.",
+  "author": {
+    "name": "Davi Guides",
+    "url": "https://github.com/daviguides"
+  },
+  "license": "MIT"
+}
