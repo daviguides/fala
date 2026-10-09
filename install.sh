@@ -107,7 +107,7 @@ print_header() {
   box_top
   box_empty
   printf "${CYAN}│${NC}   ${BOLD}F  A  L  A${NC}     Multi-Channel Communication    ${CYAN}│${NC}\n"
-  printf "${CYAN}│${NC}                   for Claude Code (v0.1.0)        ${CYAN}│${NC}\n"
+  printf "${CYAN}│${NC}                   for Claude Code (v0.2.0)        ${CYAN}│${NC}\n"
   box_empty
   box_separator
 }

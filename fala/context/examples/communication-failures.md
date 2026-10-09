@@ -117,3 +117,23 @@ Use `open` only for HTML files intended for the browser. For code, markdown, con
 ✅ Detect "via WhatsApp" as channel signal, generate HTML with WhatsApp markdown textarea + copy button. Keep the .md too if requested, but HTML is mandatory.
 
 **Key lesson**: any "vou enviar para alguem" signal triggers HTML with copy button, regardless of channel. The guide is channel-generic, not Slack-specific.
+
+
+## Failure 12: Dark text on dark preview
+
+**What happened**: Email body carried fixed `color: rgb(34,34,34)` inline while the preview card used a dark background in dark mode. The user could not read the email. Happened twice.
+
+**Root cause**: Template mixed a themed preview card with hardcoded body text color.
+
+❌ `<div style="color:rgb(34,34,34)">` inside a card with `background: var(--card)` (dark)
+✅ No color in the body. Text inherits the card color in preview and the client default when pasted.
+
+
+## Failure 13: Skill not loaded for an email request
+
+**What happened**: User asked for "uma mensagem de e-mail ... pra minha assessoria jurídica". The draft came out as chat text, no template, no copy button. Later rebuilt as plain paragraphs, losing the rich structure.
+
+**Root cause**: The skill description read as optional reference ("Load ... principles") and had no Portuguese trigger phrases, so it was not matched.
+
+❌ Draft an email directly in chat
+✅ Any email, WhatsApp or Slack draft for a third party loads fala first and uses the channel template with rich structure.

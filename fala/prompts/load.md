@@ -13,7 +13,7 @@ After loading all files, respond with EXACTLY this card:
 │                                                     │
 │   F  A  L  A     │  Multi-Channel Communication     │
 │                  │  for Claude Code                   │
-│                  │  (v0.1.0)                          │
+│                  │  (v0.2.0)                          │
 │                                                     │
 ╰─────────────────────────────────────────────────────╯
 

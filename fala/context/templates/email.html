@@ -1,199 +1,99 @@
 <!--
   Fala Email Template
-  ─────────────────────────────────────────────────────
-  Compose window preview + copy button for email body.
-  All styles inline because email clients drop <style> blocks.
-  Gmail-compatible: <table>, <tr>/<td>, inline styles, rgb() colors.
+  Compose window preview + copy buttons for subject and body.
 
   PLACEHOLDERS (replace when generating):
-    {{TITLE}}              — Browser tab title
-    {{FROM_NAME}}          — Sender display name
-    {{FROM_EMAIL}}         — Sender email
-    {{TO_EMAIL}}           — Recipient email
-    {{SUBJECT}}            — Email subject line
-    {{EMAIL_BODY}}         — Email body with ALL styles inline.
-                             Use: <p style="...">, <span style="font-weight:600">,
-                             <ul style="...">, <table style="...">
-                             Font: -apple-system,BlinkMacSystemFont,"Segoe UI",
-                                   Helvetica,Arial,sans-serif
-                             Colors: rgb() not hex
-    {{BUTTON_COPY_BODY}}   — "Copiar corpo" or "Copy body"
-    {{BUTTON_COPY_SUBJECT}} — "Copiar assunto" or "Copy subject"
-    {{BUTTON_COPIED}}      — "Copiado" or "Copied"
+    {{TITLE}}       Browser tab title (2 to 4 words, no recipient name)
+    {{TO_EMAIL}}    Recipient email
+    {{SUBJECT}}     Email subject line
+    {{EMAIL_BODY}}  Email body, rich HTML with ALL styles inline
 
-  RULES:
-    - ALL styles inline on each element
-    - NO <style> blocks
-    - NO external CSS (Tailwind, etc.)
-    - NO flexbox or grid (use <table>)
-    - Font stack: -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif
-    - Colors as rgb() values
-    - <span style="font-weight:600"> for bold (more reliable than <b>)
+  BODY RULES (what gets pasted into Gmail):
+    - Styles inline on each element (email clients drop <style> blocks)
+    - NO inline text color and NO background color anywhere in the body.
+      Text inherits the card color in the preview (readable in light and
+      dark mode) and the client default when pasted.
+    - Rich structure is expected, not plain paragraphs:
+        section titles   <p style="margin:0 0 8px 0;font-size:15px;"><span style="font-weight:600;">Title</span></p>
+        bold             <span style="font-weight:600;">text</span>
+        tables           <table cellpadding="0" cellspacing="0" style="border-collapse:collapse;">,
+                         cells with padding and rgb() borders only
+        lists            <ol style="margin:0 0 16px 22px;padding:0;"> / <ul ...>
+        callout          <div style="border-left:3px solid rgb(79,70,229);padding:4px 0 4px 14px;">
+    - Paragraph spacing via inline margin: <p style="margin:0 0 16px 0;">
+    - Colors (borders only) as rgb() values
+    - NO flexbox or grid inside the body, use <table>
+
+  PAGE CHROME: the <style> block below styles only the preview page,
+  never the body content.
 -->
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{{TITLE}}</title>
-<style>
-  :root {
-    --bg: #f9fafb;
-    --card: #ffffff;
-    --border: #e5e7eb;
-    --header: #333333;
-    --text: #333333;
-    --muted: #6b7280;
-    --accent: #4f46e5;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #111;
-      --card: #1a1a1a;
-      --border: #333;
-      --header: #222;
-      --text: #e5e5e5;
-      --muted: #999;
-      --accent: #818cf8;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{TITLE}}</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { margin: 0; padding: 32px 16px; background: rgb(246, 247, 249); color: rgb(31, 41, 55); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+    .page { max-width: 760px; margin: 0 auto; }
+    .actions { text-align: right; margin-bottom: 12px; }
+    button { padding: 8px 14px; margin-left: 6px; border: 1px solid rgb(209, 213, 219); border-radius: 7px; background: rgb(255, 255, 255); color: rgb(31, 41, 55); cursor: pointer; }
+    .card { background: rgb(255, 255, 255); border: 1px solid rgb(229, 231, 235); border-radius: 10px; overflow: hidden; }
+    .header { padding: 12px 18px; background: rgb(55, 65, 81); color: rgb(255, 255, 255); font-weight: 600; }
+    .field { padding: 10px 18px; border-bottom: 1px solid rgb(229, 231, 235); font-size: 14px; }
+    .label { display: inline-block; width: 74px; color: rgb(107, 114, 128); }
+    .body { padding: 22px 18px; line-height: 1.55; }
+    @media (prefers-color-scheme: dark) {
+      body { background: rgb(17, 24, 39); color: rgb(229, 231, 235); }
+      button, .card { background: rgb(31, 41, 55); color: rgb(229, 231, 235); border-color: rgb(75, 85, 99); }
+      .field { border-color: rgb(75, 85, 99); }
+      .label { color: rgb(156, 163, 175); }
     }
-  }
-  :root[data-theme="dark"] {
-    --bg: #111;
-    --card: #1a1a1a;
-    --border: #333;
-    --header: #222;
-    --text: #e5e5e5;
-    --muted: #999;
-    --accent: #818cf8;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    padding: 32px 16px;
-  }
-  .container { max-width: 720px; margin: 0 auto; }
-  .actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 16px;
-    justify-content: flex-end;
-  }
-  .action-btn {
-    display: inline-block;
-    padding: 6px 14px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    font-size: 13px;
-    color: var(--text);
-    background: var(--card);
-    cursor: pointer;
-    font-family: inherit;
-  }
-  .action-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .compose {
-    background: var(--card);
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    overflow: hidden;
-  }
-  .compose-header {
-    background: var(--header);
-    color: #fff;
-    padding: 10px 16px;
-    font-size: 14px;
-    font-weight: 500;
-  }
-  .field-row {
-    display: flex;
-    align-items: baseline;
-    gap: 12px;
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
-    font-size: 14px;
-  }
-  .field-label { color: var(--muted); width: 60px; flex-shrink: 0; }
-  .field-value { color: var(--text); }
-  .compose-body {
-    padding: 20px 16px;
-    background: var(--card);
-  }
-  /* Restore defaults that reset stylesheets strip */
-  .compose-body ul { list-style: disc outside; }
-  .compose-body ol { list-style: decimal outside; }
-  .compose-body p:not([style]) { margin: 1em 0; }
-  .compose-body b, .compose-body strong { font-weight: bold; }
-  .hint { text-align: center; color: var(--muted); font-size: 12px; margin-top: 12px; }
-</style>
+  </style>
 </head>
 <body>
-<div class="container">
-  <div class="actions">
-    <button class="action-btn" id="copy-subject" type="button">{{BUTTON_COPY_SUBJECT}}</button>
-    <button class="action-btn" id="copy-body" type="button">{{BUTTON_COPY_BODY}}</button>
+  <div class="page">
+    <div class="actions">
+      <button id="copy-subject" type="button">Copiar assunto</button>
+      <button id="copy-body" type="button">Copiar corpo</button>
+    </div>
+    <div class="card">
+      <div class="header">Nova mensagem</div>
+      <div class="field"><span class="label">Para</span>{{TO_EMAIL}}</div>
+      <div class="field"><span class="label">Assunto</span><span id="subject" style="font-weight: 600;">{{SUBJECT}}</span></div>
+      <div class="body" id="email-body">
+        {{EMAIL_BODY}}
+      </div>
+    </div>
   </div>
-
-  <div class="compose">
-    <div class="compose-header">New Message</div>
-    <div class="field-row">
-      <span class="field-label">From</span>
-      <span class="field-value">{{FROM_NAME}} &lt;{{FROM_EMAIL}}&gt;</span>
-    </div>
-    <div class="field-row">
-      <span class="field-label">To</span>
-      <span class="field-value">{{TO_EMAIL}}</span>
-    </div>
-    <div class="field-row">
-      <span class="field-label">Subject</span>
-      <span class="field-value" style="font-weight:500">{{SUBJECT}}</span>
-    </div>
-
-    <!-- EMAIL BODY: all styles inline, no <style> blocks -->
-    <div class="compose-body" id="email-body">
-      {{EMAIL_BODY}}
-    </div>
-    <!-- END EMAIL BODY -->
-  </div>
-
-  <p class="hint">"{{BUTTON_COPY_BODY}}" copies formatted HTML. Paste directly in Gmail with Cmd+V.</p>
-</div>
-
-<script>
-function flash(button, message) {
-  var original = button.textContent;
-  button.textContent = message;
-  setTimeout(function() { button.textContent = original; }, 1500);
-}
-
-document.getElementById('copy-body').addEventListener('click', async function(event) {
-  var body = document.getElementById('email-body');
-  var html = body.innerHTML;
-  try {
-    await navigator.clipboard.write([new ClipboardItem({
-      'text/html': new Blob([html], {type: 'text/html'}),
-      'text/plain': new Blob([body.innerText], {type: 'text/plain'}),
-    })]);
-    flash(event.target, '{{BUTTON_COPIED}}');
-  } catch (error) {
-    var range = document.createRange();
-    range.selectNodeContents(body);
-    var selection = window.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
-    flash(event.target, 'Selecionado, use Cmd+C');
-  }
-});
-
-document.getElementById('copy-subject').addEventListener('click', async function(event) {
-  try {
-    await navigator.clipboard.writeText('{{SUBJECT}}');
-    flash(event.target, '{{BUTTON_COPIED}}');
-  } catch (error) {
-    flash(event.target, 'Falhou');
-  }
-});
-</script>
+  <script>
+    function flash(button, text) {
+      var original = button.textContent;
+      button.textContent = text;
+      setTimeout(function () { button.textContent = original; }, 1500);
+    }
+    document.getElementById('copy-subject').addEventListener('click', async function (event) {
+      await navigator.clipboard.writeText(document.getElementById('subject').innerText);
+      flash(event.target, 'Copiado');
+    });
+    document.getElementById('copy-body').addEventListener('click', async function (event) {
+      var body = document.getElementById('email-body');
+      try {
+        await navigator.clipboard.write([new ClipboardItem({
+          'text/html': new Blob([body.innerHTML], { type: 'text/html' }),
+          'text/plain': new Blob([body.innerText], { type: 'text/plain' })
+        })]);
+        flash(event.target, 'Copiado');
+      } catch (error) {
+        var range = document.createRange();
+        range.selectNodeContents(body);
+        var selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        flash(event.target, 'Selecionado, use Cmd+C');
+      }
+    });
+  </script>
 </body>
 </html>

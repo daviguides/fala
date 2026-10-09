@@ -44,7 +44,7 @@ fala/
 
 | Skill | Trigger | Purpose |
 |-------|---------|---------|
-| `/fala:load` | "load communication" | Load all drafting specs and templates |
+| `/fala:load` | "email", "e-mail", "mensagem para", "whatsapp", "slack", "rascunho", "redigir" | MANDATORY before any draft for a third party; loads specs and templates |
 
 ---
 
