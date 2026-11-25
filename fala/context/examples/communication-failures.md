@@ -147,3 +147,13 @@ Use `open` only for HTML files intended for the browser. For code, markdown, con
 
 ❌ `*3. Internal routes /api/internal/creator/:userId/**`
 ✅ `` *3. Internal routes `/api/internal/creator/:userId/*`* `` (path in backticks), or U+200B between the two asterisks
+
+
+## Failure 15: Sent through a CLI without approval of the text
+
+**What happened**: User asked to send a message through their Slack CLI. Assistant wrote the text and sent it right away, without showing a draft. User required approval of the exact text before any send.
+
+**Root cause**: "Send" was read as approval of a text the user never saw.
+
+❌ Write the text and run the CLI in the same step
+✅ Show the channel HTML draft, wait for the user's OK on that text, then send
