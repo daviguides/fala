@@ -109,6 +109,25 @@ function copyRich() {
 - Markdown in the copy zone: pasted literally
 - Nested `<div>` structure: use flat HTML
 
+### Sending via the Web API (CLI)
+`chat.postMessage` takes mrkdwn text, not HTML. Use this when the user asks to send through a CLI.
+
+| Element | mrkdwn |
+|---------|--------|
+| Bold | `*bold*` (single asterisks; `**` does not work) |
+| Italic | `_italic_` |
+| Strike | `~strike~` |
+| Code | `` `code` ``, ``` ```block``` ``` |
+| Quote | `> quote` |
+| Link | `<https://url\|text>` |
+| Bullets | `• ` or `- ` at line start |
+| Sections | blank line between them |
+
+- Escape `&`, `<`, `>` as `&amp;`, `&lt;`, `&gt;`.
+- No backslash escape exists. A `*` right before the closing bold `*` (a path ending in `/*` inside a bold title) leaves the bold open and shows a literal `*`. Put that text in backticks, or insert U+200B (zero-width space) between the two asterisks.
+- Richer structure with no asterisks: Block Kit `rich_text` blocks (`style.bold` per element), if the CLI accepts blocks.
+- A sent message cannot be fixed by the copy-paste route: check the mrkdwn before sending.
+
 ### Reference Template
 `@../templates/slack.html`
 

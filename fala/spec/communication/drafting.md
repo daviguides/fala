@@ -55,6 +55,17 @@ For detailed channel rules and format specs:
 @../context/guides/channel-guide.md
 
 
+## Sending Through a CLI or API
+
+When the user asks to send (not draft) and the project communication file names a sending CLI and its recipients, send with that CLI. Otherwise produce the HTML with copy button.
+
+**ABSOLUTE RULE**: A message sent through the Slack Web API (`chat.postMessage`, any CLI that wraps it) MUST be Slack mrkdwn, NEVER HTML. HTML tags arrive literally. The copy-button HTML only works because the Slack client converts clipboard rich text.
+
+mrkdwn has no backslash escape. A literal `*` next to a closing bold `*` breaks the bold: keep that text in backticks, or put U+200B between the asterisks.
+
+Format and escaping details: the Slack section of the channel guide above.
+
+
 ## Language
 
 Always compact. Match the user's dominant language. No filler, no hedging, no pleasantries in the draft body.

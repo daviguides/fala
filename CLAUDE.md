@@ -37,6 +37,7 @@ fala/
 | WhatsApp | `templates/whatsapp.html` | Plain text from hidden textarea | `*bold*`, `•` bullets, newlines |
 | Slack | `templates/slack.html` | Rich text from rendered HTML | `<b>`, `<br><br>`, `<ul><li>` |
 | Email | `templates/email.html` | HTML with inline styles | `<table>`, inline `style="..."` |
+| Slack via API/CLI | none (sent directly) | n/a | mrkdwn: `*bold*`, `•` bullets, no HTML |
 
 ---
 

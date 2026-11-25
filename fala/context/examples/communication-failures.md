@@ -137,3 +137,13 @@ Use `open` only for HTML files intended for the browser. For code, markdown, con
 
 ❌ Draft an email directly in chat
 ✅ Any email, WhatsApp or Slack draft for a third party loads fala first and uses the channel template with rich structure.
+
+
+## Failure 14: Bold broken by a path glob (Slack API)
+
+**What happened**: A summary sent through a Slack CLI (`chat.postMessage`) had a bold title ending in a path glob: `*3. Internal routes /api/internal/creator/:userId/**`. Slack showed a literal `*` and the bold never closed.
+
+**Root cause**: mrkdwn has no escape. The glob `*` sat right before the closing bold `*`, so Slack read `**` and found no closing marker.
+
+❌ `*3. Internal routes /api/internal/creator/:userId/**`
+✅ `` *3. Internal routes `/api/internal/creator/:userId/*`* `` (path in backticks), or U+200B between the two asterisks

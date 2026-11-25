@@ -9,6 +9,7 @@ description: |
   - "email", "e-mail", "por email", "write an email"
   - "whatsapp", "whats", "zap", "via whatsapp", "slack", "via slack"
   - "mensagem para", "manda pro", "mandar pra", "enviar para", "copiar para", "quero mandar para", "vou mandar uma mensagem"
+  - "manda no slack", "envia pelo cli", "send via slack cli"
   - "rascunho", "redigir", "escreve uma mensagem", "draft a message"
   - "fala load", "load communication", "carregar fala"
 ---
